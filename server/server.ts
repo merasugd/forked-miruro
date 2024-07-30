@@ -155,11 +155,12 @@ app.get('/api/list/:route', async function (req, res) {
       let data = await metaL.fetchAnimeInfo(id, dub === 'dub' ? true : false)
 
       return res.status(200).json(data.episodes ? data.episodes.map((ep, num) => {
-        let title = ep.title === `EP ${num+1}` ? data.title+' '+`Episode ${num+1}` : ep.title
+        let default_title = (typeof data.title === 'object' ? data.title.romaji || data.title.english || data.title.native || data.title.userPreferred : String(data.title))+' '+(data.type === 'MOVIE' ? 'Movie' : `Episode ${num+1}`) 
+        let title = ep.title === `EP ${num+1}` ? default_title : ep.title
 
         return {
           "id": ep.id,
-          "title": title || data.title+' '+`Episode ${num+1}`,
+          "title": title || default_title,
           "image": ep.image,
           "imageHash": ep.imageHash,
           "number": num+1,
