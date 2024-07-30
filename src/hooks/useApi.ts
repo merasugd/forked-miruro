@@ -13,22 +13,25 @@ const BASE_URL = ensureUrlEndsWithSlash(
 const SKIP_TIMES = ensureUrlEndsWithSlash(
   import.meta.env.VITE_SKIP_TIMES as string,
 );
-let PROXY_URL = import.meta.env.VITE_PROXY_URL; // Default to an empty string if no proxy URL is provided
+
+let USE_CORS = import.meta.env.VITE_USE_CORS || true;
+let SERVER_PORT = import.meta.env.VITE_PORT || 5173; 
+let PROXY_URL = /*import.meta.env.VITE_PROXY_URL*/ USE_CORS ? `http://localhost:${SERVER_PORT}/cors/` : null; // Default to an empty string if no proxy URL is provided
 // Check if the proxy URL is provided and ensure it ends with a slash
 if (PROXY_URL) {
-  PROXY_URL = ensureUrlEndsWithSlash(import.meta.env.VITE_PROXY_URL as string);
+  PROXY_URL = ensureUrlEndsWithSlash(PROXY_URL as string);
 }
 
 const API_KEY = import.meta.env.VITE_API_KEY as string;
 
 // Axios instance
-const axiosInstance = axios.create({
+/*const axiosInstance = axios.create({
   baseURL: PROXY_URL || undefined,
   timeout: 10000,
   headers: {
     'X-API-Key': API_KEY, // Assuming your API expects the key in this header
   },
-});
+});*/
 
 // Error handling function
 // Function to handle errors and throw appropriately
@@ -174,13 +177,16 @@ async function fetchFromProxy(url: string, cache: any, cacheKey: string) {
       return cachedResponse; // Return the cached response if available
     }
 
-    // Adjust request parameters based on PROXY_URL's availability
-    const requestConfig = PROXY_URL
-      ? { params: { url } } // If PROXY_URL is defined, send the original URL as a parameter
-      : {}; // If PROXY_URL is not defined, make a direct request
-
     // Proceed with the network request
-    const response = await axiosInstance.get(PROXY_URL ? '' : url, requestConfig);
+    const response = await axios({
+      url: PROXY_URL ? PROXY_URL.endsWith('/') ? PROXY_URL+url : PROXY_URL+'/'+url : url,
+      method: 'GET',
+      headers: {
+        'X-API-Key': API_KEY, // Assuming your API expects the key in this header
+        'Target-URL': url
+      },
+      timeout: 10000
+    })
 
     // After obtaining the response, verify it for errors or empty data
     if (
