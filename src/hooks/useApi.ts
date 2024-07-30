@@ -15,9 +15,10 @@ const SKIP_TIMES = ensureUrlEndsWithSlash(
 );
 
 let USE_CORS = import.meta.env.VITE_USE_CORS || true;
-let SERVER_IP = import.meta.env.VITE_SERVER_IP as string || 'localhost';
+let SERVER_IP = import.meta.env.VITE_HOST_SERVER as string || import.meta.env.VITE_SERVER_IP as string || 'localhost';
 let SERVER_PORT = import.meta.env.VITE_PORT || 5173; 
-let API = `http://${SERVER_IP}:${SERVER_PORT}`
+let URI_PORT = SERVER_IP === "localhost" || SERVER_IP === (import.meta.env.VITE_SERVER_IP as string) ? `:${SERVER_PORT}` : ''
+let API = `http://${SERVER_IP}:${URI_PORT}`
 let PROXY_URL = /*import.meta.env.VITE_PROXY_URL*/ USE_CORS ? `${API}/cors` : undefined; // Default to an empty string if no proxy URL is provided
 // Check if the proxy URL is provided and ensure it ends with a slash
 if (PROXY_URL) {
