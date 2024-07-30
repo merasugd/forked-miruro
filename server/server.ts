@@ -45,7 +45,7 @@ app.use(bodyParser.json());
 
 // API Endpoint for exchanging authorization token
 const apiEndpoint = '/api/exchange-token';
-app.get(apiEndpoint, async (req, res) => {
+app.post(apiEndpoint, async (req, res) => {
   const { code } = req.body;
   if (!code) {
     console.error('Authorization code is missing');
