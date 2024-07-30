@@ -155,7 +155,7 @@ app.get('/api/list/:route', async function (req, res) {
       let data = await metaL.fetchAnimeInfo(id, dub === 'dub' ? true : false);
 
       return res.status(200).json(data.episodes ? data.episodes.map((ep, num) => {
-        let anime_title = typeof data.title === 'object' ? data.title.romaji || data.title.english || data.title.native || data.title.userPreferred : String(data.title);
+        let anime_title = typeof data.title === 'object' ? data.title.english || data.title.romaji || data.title.native || data.title.userPreferred : String(data.title);
         let list_type = data.type?.toLocaleLowerCase() === 'movie' ? `Movie ${num+1}` : `Episode ${num+1}`;
         let default_title = anime_title+' '+list_type;
         let title = ep.title === `EP ${num+1}` ? default_title : ep.title;
