@@ -54,7 +54,7 @@ Enjoy your favorite shows with English subs or dubs, and here's the kicker - you
 ## What is this fork?
 
 - Own CORS (no need for third-party proxy).
-- Own AniList api (still uses old anilist for safe, still to be updated and is in beta) 
+- Own Anilist api (still uses the old one for things like streams)
 
 <!-- ## Features 🪴 -->
 

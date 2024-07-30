@@ -243,13 +243,15 @@ export async function fetchAdvancedSearch(
   return fetchFromProxy(url, advancedSearchCache, cacheKey);
 }
 
+let aniApiUSe = `${API}/api/list/advance`; /*`${BASE_URL}meta/anilist`;*/
+
 // Fetch Anime DATA Function
 export async function fetchAnimeData(
   animeId: string,
   provider: string = 'gogoanime',
 ) {
-  const params = new URLSearchParams({ provider });
-  const url = `${BASE_URL}meta/anilist/data/${animeId}?${params.toString()}`;
+  const params = new URLSearchParams({ provider, id: animeId });
+  const url = `${aniApiUSe.replace('/advance', '')}/raw?${params.toString()}`;
   const cacheKey = generateCacheKey('animeData', animeId, provider);
 
   return fetchFromProxy(url, animeDataCache, cacheKey);
@@ -260,14 +262,12 @@ export async function fetchAnimeInfo(
   animeId: string,
   provider: string = 'gogoanime',
 ) {
-  const params = new URLSearchParams({ provider });
-  const url = `${BASE_URL}meta/anilist/info/${animeId}?${params.toString()}`;
+  const params = new URLSearchParams({ provider, id: animeId });
+  const url = `${aniApiUSe.replace('/advance', '')}/data?${params.toString()}`;
   const cacheKey = generateCacheKey('animeInfo', animeId, provider);
 
   return fetchFromProxy(url, animeInfoCache, cacheKey);
 }
-
-let aniApiUSe = `${API}/api/list/advance`; /*`${BASE_URL}meta/anilist`;*/
 
 // Function to fetch list of anime based on type (TopRated, Trending, Popular)
 async function fetchList(
@@ -364,8 +364,8 @@ export async function fetchAnimeEpisodes(
   provider: string = 'gogoanime',
   dub: boolean = false,
 ) {
-  const params = new URLSearchParams({ provider, dub: dub ? 'true' : 'false' });
-  const url = `${BASE_URL}meta/anilist/episodes/${animeId}?${params.toString()}`;
+  const params = new URLSearchParams({ provider, id: animeId, dub: dub ? 'true' : 'false' });
+  const url = `${aniApiUSe.replace('/advance', '')}/episodes?${params.toString()}`;
   const cacheKey = generateCacheKey(
     'animeEpisodes',
     animeId,

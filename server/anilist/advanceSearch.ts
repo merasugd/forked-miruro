@@ -1,4 +1,4 @@
-import { anilistAdvancedQuery } from './queries';
+import { anilistAdvancedQuery, anilistSearchQuery } from './queries';
 import { MediaStatus } from './MediaStatus'
 
 let api = 'https://graphql.anilist.co';
@@ -11,6 +11,8 @@ export const search = function(vars) {
 
         if(vars.year) delete vars.year
 
+        let querytoUse = vars.query ? anilistSearchQuery(vars.query, vars.page, vars.perPage, vars.type || 'ANIME') : anilistAdvancedQuery()
+
         fetch(api, {
             method: "POST",
             headers: {
@@ -18,13 +20,12 @@ export const search = function(vars) {
                 'Accept': 'application/json',
             },
             body: JSON.stringify({
-                query: anilistAdvancedQuery(),
+                query: querytoUse,
                 variables: vars
             })
         })
         .then(handleResponse)
         .then(res => {
-            console.log(vars)
             let data = res.data;
             if(!data) return reject(new Error('BAD'));
             

@@ -3,7 +3,10 @@ import axios from 'axios';
 import path from 'path';
 import os from 'os';
 import bodyParser from 'body-parser';
-import node_url from 'node:url'
+import node_url from 'node:url';
+import { META, ANIME } from '@consumet/extensions';
+import colors from 'colors';
+
 import { search } from './anilist/advanceSearch';
 
 import rate_limitter from 'express-rate-limit'
@@ -93,15 +96,14 @@ app.post(apiEndpoint, async (req, res) => {
 
 app.get('/api/list/:route', async function (req, res) {
   let route = req.params.route;
+  let advanceParams = req.query;
 
   if(route === 'advance') {
-    let advanceParams = req.query;
-
     try {
       advanceParams.sort = advanceParams.sort && typeof advanceParams.sort === 'string' ? JSON.parse(advanceParams.sort) : ["POPULARITY_DESC"];
       advanceParams.genres = advanceParams.genres && typeof advanceParams.genres === 'string' ? JSON.parse(advanceParams.genres) : 'NONE_OF_YA_BUSINESS';
 
-      if(advanceParams.genres === 'NONE_OF_YA_BUSINESS') delete advanceParams.genres   
+      if(advanceParams.genres === 'NONE_OF_YA_BUSINESS') delete advanceParams.genres;
 
       let searched = await search(advanceParams);
 
@@ -110,6 +112,64 @@ app.get('/api/list/:route', async function (req, res) {
       if(CORS_DEBUG) console.error({ error: JSON.stringify(e) });
 
       return res.status(500).json({ error: JSON.stringify(e) });
+    }
+  } else if(route === 'data') {
+    let { id, provider } = advanceParams;
+    if(!id || !provider || typeof id !== 'string' || typeof provider !== 'string') return res.status(500).json({ error: "BAD REQUEST" });
+
+    let prov = provider === "gogoanime" ? new ANIME.Gogoanime() : new ANIME.Zoro()
+
+    try {
+      let metaL = new META.Anilist(prov)
+      let data = await metaL.fetchAnimeInfo(id)
+
+      return res.status(200).json(data)
+    } catch (e) {
+      return res.status(500).json({ error: JSON.stringify(e) })
+    }
+  } else if(route === 'raw') {
+    let { id, provider } = advanceParams;
+    if(!id || !provider || typeof id !== 'string' || typeof provider !== 'string') return res.status(500).json({ error: "BAD REQUEST" });
+
+    let prov = provider === "gogoanime" ? new ANIME.Gogoanime() : new ANIME.Zoro()
+
+    try {
+      let metaL = new META.Anilist(prov)
+      let data = await metaL.fetchAnilistInfoById(id)
+
+      return res.status(200).json(data)
+    } catch (e) {
+      return res.status(500).json({ error: JSON.stringify(e) })
+    }
+  } else if(route === 'episodes') {
+    let { id, provider, dub } = advanceParams;
+
+    dub = dub || 'sub'
+
+    if(!id || !provider || !dub || typeof id !== 'string' || typeof provider !== 'string' || typeof dub !== 'string') return res.status(500).json({ error: "BAD REQUEST" });
+
+    let prov = provider === "gogoanime" ? new ANIME.Gogoanime() : new ANIME.Zoro()
+
+    try {
+      let metaL = new META.Anilist(prov)
+      let data = await metaL.fetchAnimeInfo(id, dub === 'dub' ? true : false)
+
+      return res.status(200).json(data.episodes ? data.episodes.map((ep, num) => {
+        let title = ep.title === `EP ${num+1}` ? data.title+' '+`Episode ${num+1}` : ep.title
+
+        return {
+          "id": ep.id,
+          "title": title || data.title+' '+`Episode ${num+1}`,
+          "image": ep.image,
+          "imageHash": ep.imageHash,
+          "number": num+1,
+          "createdAt": ep.releaseDate || data.releaseDate,
+          "description": ep.description || data.description || 'MIRURO',
+          "url": ep.url
+        }
+      }) : [])
+    } catch (e) {
+      return res.status(500).json({ error: JSON.stringify(e) })
     }
   } else return res.status(404).json({ error: 'API NOT FOUND!' })
 })
@@ -128,7 +188,7 @@ app.get('/cors', RATE_LIMIT, async function (req, res) {
     try {
       const targetURL = String(req.header('Target-URL') || req.params.url || req.query.url);
       if (!targetURL) {
-        if(CORS_DEBUG) console.error("400: Target-URL header or url query parameter is missing")
+        if(CORS_DEBUG) console.error(colors.cyan("[CORS Debug] ")+colors.red("400: Target-URL header or url query parameter is missing"))
 
         return res.status(400).json({ error: 'Target-URL header or url query parameter is missing' });
       }
@@ -136,34 +196,40 @@ app.get('/cors', RATE_LIMIT, async function (req, res) {
       let requestUrl = decodeURIComponent(targetURL)
       let cors_redirect = new node_url.URL(requestUrl).href
 
-      if(CORS_DEBUG) console.log(cors_redirect)
+      if(CORS_DEBUG) console.log(colors.cyan("[CORS Debug] ")+colors.yellow(cors_redirect))
 
       const response = await axios({
         url: cors_redirect,
-        method: req.method,
-        headers: Object.assign({
+        method: "GET",
+        headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-        }),
+        },
         responseType: 'json',
       });
 
       if(response.status !== 200) {
-        if(CORS_DEBUG) console.error("500: BAD REQUEST");
+        if(CORS_DEBUG) console.error(colors.cyan("[CORS Debug] ")+colors.red('BAD REQUEST'));
       };
+
+      if(CORS_DEBUG) console.log(colors.cyan("[CORS Debug] ")+colors.green(cors_redirect))
   
       return res.status(response.status).json(response.data);
     } catch (error) {
-      if(CORS_DEBUG) console.error({ error: JSON.stringify(error) })
-
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
+        if(CORS_DEBUG) console.error(colors.cyan("[CORS Debug] ")+colors.red(`${error.response.status}: ${JSON.stringify(error.response.data)}`));
+          
         res.status(error.response.status).json(error.response.data);
       } else if (error.request) {
         // The request was made but no response was received
+        if(CORS_DEBUG) console.error(colors.cyan("[CORS Debug] ")+colors.red(`No response received from target URL`));
+
         res.status(500).json({ error: 'No response received from target URL' });
       } else {
         // Something happened in setting up the request that triggered an Error
+        if(CORS_DEBUG) console.error(colors.cyan("[CORS Debug] ")+colors.red(`Error in setting up the request)`));
+
         res.status(500).json({ error: 'Error in setting up the request' });
       }
     }
