@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { URL } from 'url';
 import { year, getCurrentSeason, getNextSeason } from '../index';
 
 // Utility function to ensure URL ends with a slash
@@ -407,9 +406,7 @@ export async function fetchSkipTimes({
 }: FetchSkipTimesParams) {
   // Constructing the URL with query parameters
   const types = ['ed', 'mixed-ed', 'mixed-op', 'op', 'recap'];
-  const url = new URL(`${SKIP_TIMES}v2/skip-times/${malId}/${episodeNumber}`);
-  url.searchParams.append('episodeLength', episodeLength.toString());
-  types.forEach((type) => url.searchParams.append('types[]', type));
+  const url = `${SKIP_TIMES}v2/skip-times/${malId}/${episodeNumber}`+'?'+`episodeLength=${episodeLength.toString()}`+`${types.map(v => { return `&types[]=${v}`}).join('')}`;
 
   const cacheKey = generateCacheKey(
     'skipTimes',
