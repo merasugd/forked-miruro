@@ -180,7 +180,7 @@ app.get('/api/list/:route', async function (req, res) {
   } else return res.status(404).json({ error: 'API NOT FOUND!' });
 })
 
-app.get('/api/cors', RATE_LIMIT, async function (req, res) {
+app.get('/cors', RATE_LIMIT, async function (req, res) {
 
   // Set CORS headers: allow all origins, methods, and headers: you may want to lock this down in a production environment
   res.header("Access-Control-Allow-Origin", );
