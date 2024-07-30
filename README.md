@@ -55,6 +55,7 @@ Enjoy your favorite shows with English subs or dubs, and here's the kicker - you
 - THIS FORK DOESNT SUPPORT VERCEL HOSTING YET.
 - Own CORS (no need for third-party proxy).
 - Own Anilist api (still uses the old one for things like streams)
+- This fork is just for fun
 
 <!-- ## Features 🪴 -->
 
