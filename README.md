@@ -53,7 +53,8 @@ Enjoy your favorite shows with English subs or dubs, and here's the kicker - you
 
 ## What is this fork?
 
-I made an own cors system thats it. You can enable it in the environment variables.
+- Own CORS (no need for third-party proxy).
+- Own AniList api (still uses old anilist for safe, still to be updated and is in beta) 
 
 <!-- ## Features 🪴 -->
 

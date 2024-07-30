@@ -4,6 +4,7 @@ import path from 'path';
 import os from 'os';
 import bodyParser from 'body-parser';
 import node_url from 'node:url'
+import { search } from './anilist/advanceSearch';
 
 import rate_limitter from 'express-rate-limit'
 
@@ -90,6 +91,29 @@ app.post(apiEndpoint, async (req, res) => {
   }
 });
 
+app.get('/api/list/:route', async function (req, res) {
+  let route = req.params.route;
+
+  if(route === 'advance') {
+    let advanceParams = req.query;
+
+    try {
+      advanceParams.sort = advanceParams.sort && typeof advanceParams.sort === 'string' ? JSON.parse(advanceParams.sort) : ["POPULARITY_DESC"];
+      advanceParams.genres = advanceParams.genres && typeof advanceParams.genres === 'string' ? JSON.parse(advanceParams.genres) : 'NONE_OF_YA_BUSINESS';
+
+      if(advanceParams.genres === 'NONE_OF_YA_BUSINESS') delete advanceParams.genres   
+
+      let searched = await search(advanceParams);
+
+      return res.status(200).json(searched);
+    } catch (e) {
+      if(CORS_DEBUG) console.error({ error: JSON.stringify(e) });
+
+      return res.status(500).json({ error: JSON.stringify(e) });
+    }
+  } else return res.status(404).json({ error: 'API NOT FOUND!' })
+})
+
 app.get('/cors', RATE_LIMIT, async function (req, res) {
 
   // Set CORS headers: allow all origins, methods, and headers: you may want to lock this down in a production environment
@@ -118,9 +142,8 @@ app.get('/cors', RATE_LIMIT, async function (req, res) {
         url: cors_redirect,
         method: req.method,
         headers: Object.assign({
-          'Authorization': req.header('Authorization'),
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-        }, req.headers),
+        }),
         responseType: 'json',
       });
 
@@ -130,7 +153,7 @@ app.get('/cors', RATE_LIMIT, async function (req, res) {
   
       return res.status(response.status).json(response.data);
     } catch (error) {
-      if(CORS_DEBUG) console.error(error)
+      if(CORS_DEBUG) console.error({ error: JSON.stringify(error) })
 
       if (error.response) {
         // The request was made and the server responded with a status code

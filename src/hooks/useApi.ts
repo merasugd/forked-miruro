@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { URL } from 'url';
 import { year, getCurrentSeason, getNextSeason } from '../index';
 
 // Utility function to ensure URL ends with a slash
@@ -17,7 +18,8 @@ const SKIP_TIMES = ensureUrlEndsWithSlash(
 let USE_CORS = import.meta.env.VITE_USE_CORS || true;
 let SERVER_IP = import.meta.env.VITE_SERVER_IP as string || 'localhost';
 let SERVER_PORT = import.meta.env.VITE_PORT || 5173; 
-let PROXY_URL = /*import.meta.env.VITE_PROXY_URL*/ USE_CORS ? `http://${SERVER_IP}:${SERVER_PORT}/cors` : undefined; // Default to an empty string if no proxy URL is provided
+let API = `http://${SERVER_IP}:${SERVER_PORT}`
+let PROXY_URL = /*import.meta.env.VITE_PROXY_URL*/ USE_CORS ? `${API}/cors` : undefined; // Default to an empty string if no proxy URL is provided
 // Check if the proxy URL is provided and ensure it ends with a slash
 if (PROXY_URL) {
   PROXY_URL = ensureUrlEndsWithSlash(PROXY_URL as string);
@@ -235,7 +237,7 @@ export async function fetchAdvancedSearch(
     // Correctly encode genres as a JSON array
     queryParams.set('genres', JSON.stringify(options.genres));
   }
-  const url = `${BASE_URL}meta/anilist/advanced-search?${queryParams.toString()}`;
+  const url = `${API}/api/list/advance?${queryParams.toString()}`;
   const cacheKey = generateCacheKey('advancedSearch', queryParams.toString());
 
   return fetchFromProxy(url, advancedSearchCache, cacheKey);
@@ -265,6 +267,8 @@ export async function fetchAnimeInfo(
   return fetchFromProxy(url, animeInfoCache, cacheKey);
 }
 
+let aniApiUSe = `${API}/api/list/advance`; /*`${BASE_URL}meta/anilist`;*/
+
 // Function to fetch list of anime based on type (TopRated, Trending, Popular)
 async function fetchList(
   type: string,
@@ -287,20 +291,26 @@ async function fetchList(
       page.toString(),
       perPage.toString(),
     );
-    url = `${BASE_URL}meta/anilist/${type.toLowerCase()}`;
+    url = `${BASE_URL}meta/anilist/${type.toLowerCase()}?`;
 
-    if (type === 'TopRated') {
+    if(type === 'Trending') {
+      options = {
+        type: 'ANIME',
+        sort: ['["TRENDING_DESC", "POPULARITY_DESC"]'],
+      };
+      url = `${aniApiUSe}?type=${options.type}&sort=${options.sort}&`;
+    } if (type === 'TopRated') {
       options = {
         type: 'ANIME',
         sort: ['["SCORE_DESC"]'],
       };
-      url = `${BASE_URL}meta/anilist/advanced-search?type=${options.type}&sort=${options.sort}&`;
+      url = `${aniApiUSe}?type=${options.type}&sort=${options.sort}&`;
     } else if (type === 'Popular') {
       options = {
         type: 'ANIME',
         sort: ['["POPULARITY_DESC"]'],
       };
-      url = `${BASE_URL}meta/anilist/advanced-search?type=${options.type}&sort=${options.sort}&`;
+      url = `${aniApiUSe}?type=${options.type}&sort=${options.sort}&`;
     } else if (type === 'Upcoming') {
       const season = getNextSeason(); // This will set the season based on the current month
       options = {
@@ -310,7 +320,7 @@ async function fetchList(
         status: 'NOT_YET_RELEASED',
         sort: ['["POPULARITY_DESC"]'],
       };
-      url = `${BASE_URL}meta/anilist/advanced-search?type=${options.type}&status=${options.status}&sort=${options.sort}&season=${options.season}&year=${options.year}&`;
+      url = `${aniApiUSe}?type=${options.type}&status=${options.status}&sort=${options.sort}&season=${options.season}&year=${options.year}&`;
     } else if (type === 'TopAiring') {
       const season = getCurrentSeason(); // This will set the season based on the current month
       options = {
@@ -320,7 +330,7 @@ async function fetchList(
         status: 'RELEASING',
         sort: ['["POPULARITY_DESC"]'],
       };
-      url = `${BASE_URL}meta/anilist/advanced-search?type=${options.type}&status=${options.status}&sort=${options.sort}&season=${options.season}&year=${options.year}&`;
+      url = `${aniApiUSe}?type=${options.type}&status=${options.status}&sort=${options.sort}&season=${options.season}&year=${options.year}&`;
     }
   } else {
     cacheKey = generateCacheKey(
@@ -328,12 +338,12 @@ async function fetchList(
       page.toString(),
       perPage.toString(),
     );
-    url = `${BASE_URL}meta/anilist/${type.toLowerCase()}`;
+    url = `${BASE_URL}meta/anilist/${type.toLowerCase()}?`;
     // params already defined above
   }
 
   const specificCache = createCache(`${type}`);
-  return fetchFromProxy(`${url}?${params.toString()}`, specificCache, cacheKey);
+  return fetchFromProxy(`${url}${params.toString()}`, specificCache, cacheKey);
 }
 
 // Functions to fetch top, trending, and popular anime
