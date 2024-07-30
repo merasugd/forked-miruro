@@ -22,7 +22,6 @@ const limiter = rate_limitter({
 });
 
 const app = express();
-const api_route = express.Router();
 
 // Environment Configuration
 const PORT = process.env.VITE_PORT || 5173;
@@ -45,8 +44,8 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 // API Endpoint for exchanging authorization token
-const apiEndpoint = '/exchange-token';
-api_route.post(apiEndpoint, async (req, res) => {
+const apiEndpoint = '/api/exchange-token';
+app.get(apiEndpoint, async (req, res) => {
   const { code } = req.body;
   if (!code) {
     console.error('Authorization code is missing');
@@ -98,7 +97,7 @@ api_route.post(apiEndpoint, async (req, res) => {
   }
 });
 
-api_route.get('/list/:route', async function (req, res) {
+app.get('/api/list/:route', async function (req, res) {
   let route = req.params.route;
   let advanceParams = req.query;
 
@@ -181,7 +180,7 @@ api_route.get('/list/:route', async function (req, res) {
   } else return res.status(404).json({ error: 'API NOT FOUND!' });
 })
 
-api_route.get('/cors', RATE_LIMIT, async function (req, res) {
+app.get('/api/cors', RATE_LIMIT, async function (req, res) {
 
   // Set CORS headers: allow all origins, methods, and headers: you may want to lock this down in a production environment
   res.header("Access-Control-Allow-Origin", );
@@ -242,10 +241,6 @@ api_route.get('/cors', RATE_LIMIT, async function (req, res) {
     }
   }
 });
-
-app.use('/api/', api_route);
-app.use(helmet());
-app.use(cors());
 
 // Serve the main index.html for any non-API requests
 app.get('*', (req, res) => {
