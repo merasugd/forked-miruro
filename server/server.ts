@@ -117,46 +117,48 @@ app.get('/api/list/:route', async function (req, res) {
     let { id, provider } = advanceParams;
     if(!id || !provider || typeof id !== 'string' || typeof provider !== 'string') return res.status(500).json({ error: "BAD REQUEST" });
 
-    let prov = provider === "gogoanime" ? new ANIME.Gogoanime() : new ANIME.Zoro()
+    let prov = provider === "gogoanime" ? new ANIME.Gogoanime() : new ANIME.Zoro();
 
     try {
-      let metaL = new META.Anilist(prov)
-      let data = await metaL.fetchAnimeInfo(id)
+      let metaL = new META.Anilist(prov);
+      let data = await metaL.fetchAnimeInfo(id);
 
-      return res.status(200).json(data)
+      return res.status(200).json(data);
     } catch (e) {
-      return res.status(500).json({ error: JSON.stringify(e) })
+      return res.status(500).json({ error: JSON.stringify(e) });
     }
   } else if(route === 'raw') {
     let { id, provider } = advanceParams;
     if(!id || !provider || typeof id !== 'string' || typeof provider !== 'string') return res.status(500).json({ error: "BAD REQUEST" });
 
-    let prov = provider === "gogoanime" ? new ANIME.Gogoanime() : new ANIME.Zoro()
+    let prov = provider === "gogoanime" ? new ANIME.Gogoanime() : new ANIME.Zoro();
 
     try {
-      let metaL = new META.Anilist(prov)
-      let data = await metaL.fetchAnilistInfoById(id)
+      let metaL = new META.Anilist(prov);
+      let data = await metaL.fetchAnilistInfoById(id);
 
-      return res.status(200).json(data)
+      return res.status(200).json(data);
     } catch (e) {
-      return res.status(500).json({ error: JSON.stringify(e) })
+      return res.status(500).json({ error: JSON.stringify(e) });
     }
   } else if(route === 'episodes') {
     let { id, provider, dub } = advanceParams;
 
-    dub = dub || 'sub'
+    dub = dub || 'sub';
 
     if(!id || !provider || !dub || typeof id !== 'string' || typeof provider !== 'string' || typeof dub !== 'string') return res.status(500).json({ error: "BAD REQUEST" });
 
-    let prov = provider === "gogoanime" ? new ANIME.Gogoanime() : new ANIME.Zoro()
+    let prov = provider === "gogoanime" ? new ANIME.Gogoanime() : new ANIME.Zoro();
 
     try {
-      let metaL = new META.Anilist(prov)
-      let data = await metaL.fetchAnimeInfo(id, dub === 'dub' ? true : false)
+      let metaL = new META.Anilist(prov);
+      let data = await metaL.fetchAnimeInfo(id, dub === 'dub' ? true : false);
 
       return res.status(200).json(data.episodes ? data.episodes.map((ep, num) => {
-        let default_title = (typeof data.title === 'object' ? data.title.romaji || data.title.english || data.title.native || data.title.userPreferred : String(data.title))+' '+(data.type === 'MOVIE' ? 'Movie' : `Episode ${num+1}`) 
-        let title = ep.title === `EP ${num+1}` ? default_title : ep.title
+        let anime_title = typeof data.title === 'object' ? data.title.romaji || data.title.english || data.title.native || data.title.userPreferred : String(data.title);
+        let list_type = data.type?.toLocaleLowerCase() === 'movie' ? `Movie ${num+1}` : `Episode ${num+1}`;
+        let default_title = anime_title+' '+list_type;
+        let title = ep.title === `EP ${num+1}` ? default_title : ep.title;
 
         return {
           "id": ep.id,
@@ -167,12 +169,12 @@ app.get('/api/list/:route', async function (req, res) {
           "createdAt": ep.releaseDate || data.releaseDate,
           "description": ep.description || data.description || 'MIRURO',
           "url": ep.url
-        }
-      }) : [])
+        };
+      }) : []);
     } catch (e) {
-      return res.status(500).json({ error: JSON.stringify(e) })
+      return res.status(500).json({ error: JSON.stringify(e) });
     }
-  } else return res.status(404).json({ error: 'API NOT FOUND!' })
+  } else return res.status(404).json({ error: 'API NOT FOUND!' });
 })
 
 app.get('/cors', RATE_LIMIT, async function (req, res) {
