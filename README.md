@@ -51,6 +51,10 @@ Crafted with using **React** and **Vite**, our site rocks a slick and modern int
 
 Enjoy your favorite shows with English subs or dubs, and here's the kicker - you can download individual episodes hassle-free, no sign-up required!
 
+## What is this fork?
+
+I made an own cors system thats it. You can enable it in the environment variables.
+
 <!-- ## Features 🪴 -->
 
 <details>

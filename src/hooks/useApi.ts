@@ -15,8 +15,9 @@ const SKIP_TIMES = ensureUrlEndsWithSlash(
 );
 
 let USE_CORS = import.meta.env.VITE_USE_CORS || true;
+let SERVER_IP = import.meta.env.VITE_SERVER_IP as string || 'localhost';
 let SERVER_PORT = import.meta.env.VITE_PORT || 5173; 
-let PROXY_URL = /*import.meta.env.VITE_PROXY_URL*/ USE_CORS ? `http://localhost:${SERVER_PORT}/cors/` : null; // Default to an empty string if no proxy URL is provided
+let PROXY_URL = /*import.meta.env.VITE_PROXY_URL*/ USE_CORS ? `http://${SERVER_IP}:${SERVER_PORT}/cors` : undefined; // Default to an empty string if no proxy URL is provided
 // Check if the proxy URL is provided and ensure it ends with a slash
 if (PROXY_URL) {
   PROXY_URL = ensureUrlEndsWithSlash(PROXY_URL as string);
@@ -179,7 +180,7 @@ async function fetchFromProxy(url: string, cache: any, cacheKey: string) {
 
     // Proceed with the network request
     const response = await axios({
-      url: PROXY_URL ? PROXY_URL.endsWith('/') ? PROXY_URL+url : PROXY_URL+'/'+url : url,
+      url: PROXY_URL ? PROXY_URL : url,
       method: 'GET',
       headers: {
         'X-API-Key': API_KEY, // Assuming your API expects the key in this header

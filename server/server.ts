@@ -90,7 +90,7 @@ app.post(apiEndpoint, async (req, res) => {
   }
 });
 
-app.get('/cors/:url', RATE_LIMIT, async function (req, res) {
+app.get('/cors', RATE_LIMIT, async function (req, res) {
 
   // Set CORS headers: allow all origins, methods, and headers: you may want to lock this down in a production environment
   res.header("Access-Control-Allow-Origin", );
@@ -106,7 +106,7 @@ app.get('/cors/:url', RATE_LIMIT, async function (req, res) {
       if (!targetURL) {
         if(CORS_DEBUG) console.error("400: Target-URL header or url query parameter is missing")
 
-        return res.status(400).send({ error: 'Target-URL header or url query parameter is missing' });
+        return res.status(400).json({ error: 'Target-URL header or url query parameter is missing' });
       }
   
       let requestUrl = decodeURIComponent(targetURL)
@@ -117,17 +117,15 @@ app.get('/cors/:url', RATE_LIMIT, async function (req, res) {
       const response = await axios({
         url: cors_redirect,
         method: req.method,
-        headers: Object.assign(req.headers, {
+        headers: Object.assign({
           'Authorization': req.header('Authorization'),
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-        }),
+        }, req.headers),
         responseType: 'json',
       });
 
       if(response.status !== 200) {
         if(CORS_DEBUG) console.error("500: BAD REQUEST");
-
-        return res.status(500).json({ error: "Bad Request" });
       };
   
       return res.status(response.status).json(response.data);
@@ -137,13 +135,13 @@ app.get('/cors/:url', RATE_LIMIT, async function (req, res) {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        res.status(error.response.status).send(error.response.data);
+        res.status(error.response.status).json(error.response.data);
       } else if (error.request) {
         // The request was made but no response was received
-        res.status(500).send({ error: 'No response received from target URL' });
+        res.status(500).json({ error: 'No response received from target URL' });
       } else {
         // Something happened in setting up the request that triggered an Error
-        res.status(500).send({ error: 'Error in setting up the request' });
+        res.status(500).json({ error: 'Error in setting up the request' });
       }
     }
   }

@@ -1,12 +1,24 @@
 import { defineConfig, loadEnv, UserConfigExport, ConfigEnv } from 'vite';
+import os from 'node:os'
 import react from '@vitejs/plugin-react';
+
+function getLocalIpAddress() {
+  const networkInterfaces = os.networkInterfaces();
+  for (const networkInterface of Object.values(networkInterfaces)) {
+    const found = networkInterface?.find(
+      (net) => net.family === 'IPv4' && !net.internal,
+    );
+    if (found) return found.address;
+  }
+  return 'localhost';
+}
 
 // This is a TypeScript Vite Config file.
 // Comments are retained from both original configurations for clarity.
 export default ({ mode }: ConfigEnv): UserConfigExport => {
   // Load environment variables and merge them with process.env
   // You can access Vite specific env variables here like VITE_NAME using process.env.VITE_NAME
-  process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
+  process.env = Object.assign({ ...process.env, ...loadEnv(mode, process.cwd()) }, { VITE_SERVER_IP: getLocalIpAddress() });
 
   return defineConfig({
     plugins: [react()], // Using React plugin from Vite
