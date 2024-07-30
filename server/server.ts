@@ -7,6 +7,9 @@ import node_url from 'node:url';
 import { META, ANIME } from '@consumet/extensions';
 import colors from 'colors';
 
+import cors from 'cors';
+import helmet from 'helmet';
+
 import { search } from './anilist/advanceSearch';
 
 import rate_limitter from 'express-rate-limit'
@@ -19,6 +22,7 @@ const limiter = rate_limitter({
 });
 
 const app = express();
+const api_route = express.Router();
 
 // Environment Configuration
 const PORT = process.env.VITE_PORT || 5173;
@@ -41,8 +45,8 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 // API Endpoint for exchanging authorization token
-const apiEndpoint = '/api/exchange-token';
-app.post(apiEndpoint, async (req, res) => {
+const apiEndpoint = '/exchange-token';
+api_route.post(apiEndpoint, async (req, res) => {
   const { code } = req.body;
   if (!code) {
     console.error('Authorization code is missing');
@@ -94,7 +98,7 @@ app.post(apiEndpoint, async (req, res) => {
   }
 });
 
-app.get('/api/list/:route', async function (req, res) {
+api_route.get('/list/:route', async function (req, res) {
   let route = req.params.route;
   let advanceParams = req.query;
 
@@ -177,7 +181,7 @@ app.get('/api/list/:route', async function (req, res) {
   } else return res.status(404).json({ error: 'API NOT FOUND!' });
 })
 
-app.get('/cors', RATE_LIMIT, async function (req, res) {
+api_route.get('/cors', RATE_LIMIT, async function (req, res) {
 
   // Set CORS headers: allow all origins, methods, and headers: you may want to lock this down in a production environment
   res.header("Access-Control-Allow-Origin", );
@@ -238,6 +242,10 @@ app.get('/cors', RATE_LIMIT, async function (req, res) {
     }
   }
 });
+
+app.use('/api/', api_route);
+app.use(helmet());
+app.use(cors());
 
 // Serve the main index.html for any non-API requests
 app.get('*', (req, res) => {
